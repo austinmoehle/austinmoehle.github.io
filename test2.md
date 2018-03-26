@@ -1,18 +1,38 @@
 ---
-# You don't need to edit this file, it's empty on purpose.
-# Edit theme's home layout instead if you wanna make some changes
-# See: https://jekyllrb.com/docs/themes/#overriding-theme-defaults
-layout: default
+layout: double
 ---
 
-The inputs to deep neural networks for audio are typically log-spectrograms generated from Fourier transforms (FFTs) or [FFT-based filter banks](https://en.wikipedia.org/wiki/Mel-frequency_cepstrum) and their temporal derivatives, as in [these](http://proceedings.mlr.press/v48/amodei16.html)) [papers](https://arxiv.org/pdf/1303.5778.pdf) on speech recognition
+# Introduction
 
-I confess that I am not an expert on the theory behind FFTs and phase reconstruction - if you can think of a better approach, please let me know!
+
+
+
+
+# Approaches to Spectrogram Classification
+
+
 
 Test.[^fn1]
-Traditionally, music informatics research (MIR) has used human-constructed features such as [mel-frequency cepstral coefficients (MFCCs)](https://en.wikipedia.org/wiki/Mel-frequency_cepstrum) and chromas to categorize and analyze audio.
-The authors converted audio from the [Xeno-Canto database](http://www.xeno-canto.org/) to spectrograms using the standard short-time FFT procedure (Hamming window, frame length of 512 samples, and 256-sample overlap).
 
+Traditionally, music informatics research (MIR) has used human-constructed features such as mel-frequency cepstral coefficients (MFCCs) and chromas to categorize and analyze audio. Even some approaches based on deep learning have used temporal chroma and timbral coefficients rather than raw audio as inputs to neural networks.[ref] More recently, researchers have attempted end-to-end classification using both raw audio and spectrograms; in one result, using spectrograms as input to a CNN outperformed a raw-audio CNN.[ref]
+
+
+The typical approach to
+
+
+To the best of my knowledge, the only work to date that used CNNs to classify bird-song spectrograms is a [2016 paper](http://ceur-ws.org/Vol-1609/16090560.pdf).[^fn1] The authors converted audio from the [Xeno-Canto database](http://www.xeno-canto.org/) to spectrograms using the standard short-time FFT procedure (Hamming window, frame length of 512 samples, and 256-sample overlap). Interestingly, the authors decided to "drop" (i.e. set to zero) low-intensity portions of the images, which to me seems counterproductive - the stark contrast between the zero-set portions and the leftover patterns produced artificial sharp edges that a CNN would detect as edges. In any case, their best model, a variant of AlexNet, reached a MAP (mean average precision) of 43% over 999 classes. While some aspects of their work were encouraging, I opted to build a different audio preprocessing pipeline and utilize a more complex model architecture (Inception-v3) for classification, as described below.
+
+
+# The Dataset
+
+![Tufted Titmouse (23 recordings)](assets/Tufted_Titmouse_1.jpg)
+![White-Throated Sparrow (20 recordings)](assets/White-throated_Sparrow_1.jpg)
+![Tennessee Warbler (16 recordings)](assets/Tennessee_Warbler_male.jpg)
+2.65 GB of bird sound recordings (.mp3 format)
+
+The Master Set includes ~5000 recordings of bird songs and calls, labeled by species and by type (e.g. "whistle call" or "song"). To narrow the focus of my efforts to distinguishing bird species, I included only bird songs from the top 48 species, as ordered by number of recordings available.
+
+23 recordings --> min 6 recordings (48 species)
 
 Label        | Bird Species
 -------------|--------------
@@ -65,6 +85,65 @@ Label        | Bird Species
 47|Baltimore Oriole
 48|American Tree Sparrow
 
+
+# Data Preprocessing
+
+To classify bird-song audio using a convolutional neural network (CNN) model, the audio must be sliced into short snippets then processed using a Fourier transform (FFT) to generate a frequency-vs.-time spectrogram, which can then be fed into any standard CNN once properly scaled into a square greyscale image.
+
+The FFT works as follows: a short-time window placed over the audio captures the frequency distribution of the sound at that instant in time. Sliding this window over the length of the data produces a 2D "image" that captures the frequency-vs.-time characteristics of the audio. For this project, I used a Hamming window with an FFT size of 512 samples and window-overlap of 256 samples to produce 224x341 greyscale images (0 to 44100 Hz, 4 seconds wide). Later in the pipeline, a random crop is taken (224x224) then rescaled to an input shape (299x299) matching the base layer of the Inception-v3 network. The random crop in the time dimension served as data augmentation; note that the frequency dimension was not cropped in case absolute pitch proved useful for distinguishing songs.
+
+
+
+
+# Model Architecture
+
+
+
+
+
+
+![Inception-v3 Architecture](assets/inception_v3_architecture.png)
+
+Since I was limited by my personal GPU (GTX 960 with 6GB RAM), training a large model from scratch was not feasible. Instead, I started from a pre-trained model then fine-tuned the learned weights using my data, a technique called transfer learning. I used the Inception-v3 (GoogLeNet) CNN model architecture, as specified in [this paper](http://www.image-net.org/) and provided by the TensorFlow Slim model library.
+
+*Add model architecture information.*
+
+
+Although this network was trained on a standard image classification task (000000 error (accuracy) on the [ImageNet](http://www.image-net.org/) training set of 000000 images from 000000 classes), I expected the model to transfer reasonably well to an audio classification task. The bird-song spectrograms have features (e.g. patterned lines and squiggles) that are visually distinguishable by a human observer and likely to be detected by the lower layers in a CNN, which are responsible for detecting these low-level features. My approach was to first freeze these lower layers with the ImageNet-trained weights and train only the final fully-connected layer (fc8), then "fine-tune" by unfreezing the rest of the net and training all weights over many epochs.
+
+
+
+# Results - Finetuning Final Layer (fc8)
+
+
+# Results - Finetuning All Layers
+
+
+
+
+
+
+
+
+# Conclusions
+
+While deep neural networks applied to spectrograms can succeed in classifying audio, the spectrogram approach cannot be used to generate or modify audio. Why? Because the spectrogram is only the real part of the FFT - the imaginary part (the phase information) is lost. Any attempt to reconstruct audio from a newly generated spectrogram is necessarily lossy without the phase information. For this reason, fun tricks like visual style-transfer ala Johnson (0000) aren't compatible with this spectrogram-based approach. Direct audio style-transfer (e.g. "genre swaps" for music) would instead require training a deep neural network on raw 1D audio data, which of course would require a new model architecture.
+
+*Past work on deep learning using raw audio*
+
+
+
+
+
+
+
+
+
+# References
+
+[^fn1] Tóth, B.P. and Czeba, B., 2016, September. Convolutional Neural Networks for Large-Scale Bird Song Classification in Noisy Environment. In CLEF (Working Notes) (pp. 560-568).
+
+---
 
 ---
 __Advertisement :)__

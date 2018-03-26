@@ -1,0 +1,49 @@
+0:dummy
+1:Tufted Titmouse
+2:White-throated Sparrow
+3:Tennessee Warbler
+4:Magnolia Warbler
+5:White-winged Crossbill
+6:Ruby-crowned Kinglet
+7:Connecticut Warbler
+8:Cape May Warbler
+9:Blackburnian Warbler
+10:Bay-breasted Warbler
+11:Olive Warbler
+12:Northern Cardinal
+13:Lincoln's Sparrow
+14:Golden-crowned Sparrow
+15:Yellow Warbler
+16:White-eyed Vireo
+17:Virginia's Warbler
+18:Townsend's Warbler
+19:Lucy's Warbler
+20:Black-crested Titmouse
+21:American Redstart
+22:Song Sparrow
+23:Red-faced Warbler
+24:Pine Warbler
+25:Northern Mockingbird
+26:Chipping Sparrow
+27:Brown Creeper (Eastern)
+28:Black-throated Blue Warbler
+29:Yellow-eyed Junco
+30:White-breasted Nuthatch (Interior West)
+31:Swainson's Thrush (Olive-backed)
+32:Purple Finch (Eastern)
+33:Ovenbird
+34:Orange-crowned Warbler (lutescens)
+35:Mourning Warbler
+36:Lapland Longspur
+37:Kirtland's Warbler
+38:House Wren
+39:Golden-winged Warbler
+40:Eastern Towhee
+41:Chestnut-sided Warbler
+42:Carolina Chickadee
+43:Blue-winged Warbler
+44:Blue Grosbeak
+45:Black-and-white Warbler
+46:Bewick's Wren (Interior West)
+47:Baltimore Oriole
+48:American Tree Sparrow

@@ -1,0 +1,2 @@
+True Class: ../snips/35/samples/1.wav
+Prediction: ../snips/8/samples/6.wav
