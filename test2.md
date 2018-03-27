@@ -145,6 +145,313 @@ While deep neural networks applied to spectrograms can succeed in classifying au
 
 ---
 
+The inputs to deep neural networks for audio are typically log-spectrograms generated from Fourier transforms (FFTs) or [FFT-based filter banks](https://en.wikipedia.org/wiki/Mel-frequency_cepstrum) and their temporal derivatives, as in [these](http://proceedings.mlr.press/v48/amodei16.html)) [papers](https://arxiv.org/pdf/1303.5778.pdf) on speech recognition
+
+I confess that I am not an expert on the theory behind FFTs and phase reconstruction - if you can think of a better approach, please let me know!
+
+Test.[^fn1]
+Traditionally, music informatics research (MIR) has used human-constructed features such as [mel-frequency cepstral coefficients (MFCCs)](https://en.wikipedia.org/wiki/Mel-frequency_cepstrum) and chromas to categorize and analyze audio.
+The authors converted audio from the [Xeno-Canto database](http://www.xeno-canto.org/) to spectrograms using the standard short-time FFT procedure (Hamming window, frame length of 512 samples, and 256-sample overlap).
+
+
+Label        | Bird Species
+-------------|--------------
+1|Tufted Titmouse
+2|White-throated Sparrow
+3|Tennessee Warbler
+4|Magnolia Warbler
+5|White-winged Crossbill
+6|Ruby-crowned Kinglet
+7|Connecticut Warbler
+8|Cape May Warbler
+9|Blackburnian Warbler
+10|Bay-breasted Warbler
+11|Olive Warbler
+12|Northern Cardinal
+13|Lincoln's Sparrow
+14|Golden-crowned Sparrow
+15|Yellow Warbler
+16|White-eyed Vireo
+17|Virginia's Warbler
+18|Townsend's Warbler
+19|Lucy's Warbler
+20|Black-crested Titmouse
+21|American Redstart
+22|Song Sparrow
+23|Red-faced Warbler
+24|Pine Warbler
+25|Northern Mockingbird
+26|Chipping Sparrow
+27|Brown Creeper (Eastern)
+28|Black-throated Blue Warbler
+29|Yellow-eyed Junco
+30|White-breasted Nuthatch (Interior West)
+31|Swainson's Thrush (Olive-backed)
+32|Purple Finch (Eastern)
+33|Ovenbird
+34|Orange-crowned Warbler (lutescens)
+35|Mourning Warbler
+36|Lapland Longspur
+37|Kirtland's Warbler
+38|House Wren
+39|Golden-winged Warbler
+40|Eastern Towhee
+41|Chestnut-sided Warbler
+42|Carolina Chickadee
+43|Blue-winged Warbler
+44|Blue Grosbeak
+45|Black-and-white Warbler
+46|Bewick's Wren (Interior West)
+47|Baltimore Oriole
+48|American Tree Sparrow
+
+
+---
+__Advertisement :)__
+
+- __[pica](https://nodeca.github.io/pica/demo/)__ - high quality and fast image
+  resize in browser.
+- __[babelfish](https://github.com/nodeca/babelfish/)__ - developer friendly
+  i18n with plurals support and easy syntax.
+
+You will like those projects!
+
+---
+
+# h1 Heading 8-)
+## h2 Heading
+### h3 Heading
+#### h4 Heading
+##### h5 Heading
+###### h6 Heading
+
+
+## Horizontal Rules
+
+___
+
+---
+
+***
+
+
+## Typographic replacements
+
+Enable typographer option to see result.
+
+(c) (C) (r) (R) (tm) (TM) (p) (P) +-
+
+test.. test... test..... test?..... test!....
+
+!!!!!! ???? ,,  -- ---
+
+"Smartypants, double quotes" and 'single quotes'
+
+
+## Emphasis
+
+**This is bold text**
+
+__This is bold text__
+
+*This is italic text*
+
+_This is italic text_
+
+~~Strikethrough~~
+
+
+## Blockquotes
+
+
+> Blockquotes can also be nested...
+>> ...by using additional greater-than signs right next to each other...
+> > > ...or with spaces between arrows.
+
+
+## Lists
+
+Unordered
+
++ Create a list by starting a line with `+`, `-`, or `*`
++ Sub-lists are made by indenting 2 spaces:
+  - Marker character change forces new list start:
+    * Ac tristique libero volutpat at
+    + Facilisis in pretium nisl aliquet
+    - Nulla volutpat aliquam velit
++ Very easy!
+
+Ordered
+
+1. Lorem ipsum dolor sit amet
+2. Consectetur adipiscing elit
+3. Integer molestie lorem at massa
+
+
+1. You can use sequential numbers...
+1. ...or keep all the numbers as `1.`
+
+Start numbering with offset:
+
+57. foo
+1. bar
+
+
+## Code
+
+Inline `code`
+
+Indented code
+
+    // Some comments
+    line 1 of code
+    line 2 of code
+    line 3 of code
+
+
+Block code "fences"
+
+```
+Sample text here...
+```
+
+Syntax highlighting
+
+``` js
+var foo = function (bar) {
+  return bar++;
+};
+
+console.log(foo(5));
+```
+
+## Tables
+
+| Option | Description |
+| ------ | ----------- |
+| data   | path to data files to supply the data that will be passed into templates. |
+| engine | engine to be used for processing templates. Handlebars is the default. |
+| ext    | extension to be used for dest files. |
+
+Right aligned columns
+
+| Option | Description |
+| ------:| -----------:|
+| data   | path to data files to supply the data that will be passed into templates. |
+| engine | engine to be used for processing templates. Handlebars is the default. |
+| ext    | extension to be used for dest files. |
+
+
+## Links
+
+[link text](http://dev.nodeca.com)
+
+[link with title](http://nodeca.github.io/pica/demo/ "title text!")
+
+Autoconverted link https://github.com/nodeca/pica (enable linkify to see)
+
+
+## Images
+
+![Minion](https://octodex.github.com/images/minion.png)
+![Stormtroopocat](https://octodex.github.com/images/stormtroopocat.jpg "The Stormtroopocat")
+
+Like links, Images also have a footnote style syntax
+
+![Alt text][id]
+
+With a reference later in the document defining the URL location:
+
+[id]: https://octodex.github.com/images/dojocat.jpg  "The Dojocat"
+
+
+## Plugins
+
+The killer feature of `markdown-it` is very effective support of
+[syntax plugins](https://www.npmjs.org/browse/keyword/markdown-it-plugin).
+
+
+### [Emojies](https://github.com/markdown-it/markdown-it-emoji)
+
+> Classic markup: :wink: :crush: :cry: :tear: :laughing: :yum:
+>
+> Shortcuts (emoticons): :-) :-( 8-) ;)
+
+see [how to change output](https://github.com/markdown-it/markdown-it-emoji#change-output) with twemoji.
+
+
+### [Subscript](https://github.com/markdown-it/markdown-it-sub) / [Superscript](https://github.com/markdown-it/markdown-it-sup)
+
+- 19^th^
+- H~2~O
+
+
+### [\<ins>](https://github.com/markdown-it/markdown-it-ins)
+
+++Inserted text++
+
+
+### [\<mark>](https://github.com/markdown-it/markdown-it-mark)
+
+==Marked text==
+
+
+### [Footnotes](https://github.com/markdown-it/markdown-it-footnote)
+
+Footnote 1 link[^first].
+
+Footnote 2 link[^second].
+
+Inline footnote^[Text of inline footnote] definition.
+
+Duplicated footnote reference[^second].
+
+[^first]: Footnote **can have markup**
+
+    and multiple paragraphs.
+
+[^second]: Footnote text.
+
+
+### [Definition lists](https://github.com/markdown-it/markdown-it-deflist)
+
+Term 1
+
+:   Definition 1
+with lazy continuation.
+
+Term 2 with *inline markup*
+
+:   Definition 2
+
+        { some code, part of Definition 2 }
+
+    Third paragraph of definition 2.
+
+_Compact style:_
+
+Term 1
+  ~ Definition 1
+
+Term 2
+  ~ Definition 2a
+  ~ Definition 2b
+
+
+### [Abbreviations](https://github.com/markdown-it/markdown-it-abbr)
+
+This is HTML abbreviation example.
+
+It converts "HTML", but keep intact partial entries like "xxxHTMLyyy" and so on.
+
+*[HTML]: Hyper Text Markup Language
+
+### [Custom containers](https://github.com/markdown-it/markdown-it-container)
+
+::: warning
+*here be dragons*
+:::
+
 ---
 __Advertisement :)__
 

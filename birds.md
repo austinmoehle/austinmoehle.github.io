@@ -1,19 +1,18 @@
 ---
-layout: default
+layout: page
+title: Birdsongs
+author: "Austin Moehle"
 ---
 
+#### Classification of Bird Songs Using the Inception-v3 Network
 
----
-# Introduction
+## Introduction
 
+While deep learning is widely applied to speech recognition, efforts to categorize environmental sounds or music with the same techniques are less common. To the best of my knowledge, the identification of bird songs from field recordings has only been attempted in [one paper](http://ceur-ws.org/Vol-1609/16090560.pdf) from 2016. The authors, Tóth and Czeba, used a standard short-time FFT procedure to convert audio into 2D spectrograms that are fed into a standard convolutional neural network (CNN). Interestingly, they also decided to drop the low-intensity portions of the images (i.e. set them to zero) to emphasize the actual features. This seemed slightly counterproductive to me, since the stark contrast between the zero-set portions and the leftovers produced artificial edges that a CNN would detect as features. Still, their results were solid: their best model, a variant of AlexNet, reached a MAP (mean average precision) of 43% over 999 classes.
 
-While deep learning is widely applied to speech recognition, efforts to categorize environmental sounds or music with the same techniques are less common. In particular, the use of deep neural networks to identify bird songs in field recordings is a niche problem that, to the best of my knowledge, has only been tackled in [one 2016 paper](http://ceur-ws.org/Vol-1609/16090560.pdf). The authors, Tóth and Czeba, used a standard short-time FFT procedure to convert audio into 2D spectrograms that are fed into a standard convolutional neural network (CNN). Interestingly, they also decided to drop the low-intensity portions of the images (i.e. set them to zero) to emphasize the actual features. This seemed slightly counterproductive to me, since the stark contrast between the zero-set portions and the leftovers produced artificial edges that a CNN would detect as features. Still, their results were solid: their best model, a variant of AlexNet, reached a MAP (mean average precision) of 43% over 999 classes.
+For this project, I opted to build my own audio preprocessing pipeline and use the more complex [Inception-v3](https://arxiv.org/abs/1409.4842) model architecture.
 
-For this project, I opted to build my own audio preprocessing pipeline and use a more complex model architecture (Inception-v3).
-
-
----
-# The Dataset
+## The Dataset
 
 <img src="assets/Tufted_Titmouse_1.jpg" width="400">
 
@@ -28,7 +27,7 @@ For this project, I opted to build my own audio preprocessing pipeline and use a
 **Tennessee Warbler (Male)**
 
 
-The Master Set includes 2.65 GB (~5000 recordings) of bird songs and calls, labeled by species and by type (e.g. "whistle call" or "song"). To narrow my focus, I limited the dataset to just songs and included only bird species with at least 6 field recordings, which reduced the number of classes to 48.
+The Cornell Lab of Ornithology provides a Master Set of bird field recordings, consisting of 2.65 GB (~5000 recordings) of bird songs and calls labeled by species and by type (e.g. "whistle call" or "song"). To narrow the focus of this project, I limited the dataset to just songs and included only bird species with at least 6 field recordings. This reduced the number of classes from 326 to 48.
 
 Label        | Bird Species | Recordings
 -------------|--------------|-------------
@@ -41,14 +40,11 @@ Label        | Bird Species | Recordings
 48|American Tree Sparrow|6
 
 
-See the [labels file](samples/labels.txt) for a full list of the 48 birds in the dataset.
+See the [labels file](samples/labels.txt) for a full list of the 48 included birds.
 
+## Data Preprocessing
 
-
----
-# Data Preprocessing
-
-To classify bird-song audio using a convolutional neural network (CNN) model, the audio must be sliced into short snippets then processed using a Fourier transform (FFT) to generate a frequency-vs.-time spectrogram, which can then be fed into any standard CNN once properly scaled into a square greyscale image.
+To classify bird songs using a convolutional neural network (CNN) model, the audio is sliced into short snippets then processed using a short-time Fourier transform (FFT) to produce a frequency-vs.-time spectrogram. This 2D greyscale "image" can then be fed into any standard CNN once properly scaled and cropped.
 
 The FFT works as follows: a short-time window placed over the audio captures the frequency distribution of the sound at that instant in time. Sliding this window over the length of the data produces a 2D "image" that captures the frequency-vs.-time characteristics of the audio. Usually, a mel-scale (basically a log-scale) is used for the frequency axis. For this project, I used a Hamming window with an FFT size of 512 samples and window-overlap of 256 samples to produce 224x341 greyscale images (0 to 44100 Hz, 4 seconds wide). Later in the pipeline, a random crop is taken (224x224) then rescaled to an input shape (299x299) matching the base layer of the Inception-v3 network. The random crop in the time dimension served as data augmentation; note that the frequency dimension was not cropped in case absolute pitch proved useful for distinguishing songs.
 
@@ -56,24 +52,17 @@ The FFT works as follows: a short-time window placed over the audio captures the
 
 **Song of a Ruby-Crowned Kinglet**
 
-
----
-# Model Architecture
+## Model Architecture
 
 Since I was limited by my personal GPU (GTX 960 with 4GB RAM), training a large CNN from scratch was not feasible. Instead, I initialized a pre-trained model then fine-tuned the learned weights on my dataset, a technique called transfer learning. I used the Inception-v3 CNN model architecture, as specified in [the paper](0000000) and provided by the TensorFlow Slim model library. Inception-v3 achieved 000000 accuracy on the [ImageNet](http://www.image-net.org/) training set of 000000 images from 000000 classes.
 
 ![Inception-v3 Architecture](assets/inception_v3_architecture.png)
 
-*Add model architecture information.*
-
-
 Although this network was trained on an image classification task, I expected the model to transfer reasonably well to audio classification. The basic visual features in bird song spectrograms (e.g. patterned lines and squiggles) are easily distinguishable by a human observer, so I expected them to be picked up by the early layers of CNNs, which are generally responsible for detecting low-level features.
 
 My plan was to first freeze these lower layers with the ImageNet-trained weights and train only the final fully-connected layer used for classification, then "fine-tune" the model by unfreezing the rest of the net and training all weights over many epochs.
 
-
----
-# Training Final Fully-Connected Layer
+## Training Final Fully-Connected Layer
 
 After training the final layer for 00000 epochs,
 
@@ -86,8 +75,7 @@ For this training run, the Adam optimizer was set to an initial learning rate of
 
 ![Hyperparameter search](assets/hp_logits.png)
 
----
-# Results - Training Full Net
+## Results - Training Full Net
 
 Continuing from the above partially-trained model, I trained the full net (all trainable weights) for 750 more epochs. Again, I did a hyperparameter search and settled on `learning_rate=7.8e-4` and `epsilon=0.67`.
 
@@ -162,11 +150,7 @@ Let's take a look at some of the model's predictions. For each prediction, I've 
 
 [Audio - Right Image](samples/wav/33_0.wav)
 
-
-
-
----
-# Conclusions
+## Conclusions
 
 What can we do with bird songs and other interesting sounds besides classification? At one point I wanted to try my hand at musical style transfer ala [Johnson](https://github.com/jcjohnson/fast-neural-style) or generate a sonic "visualization" of intermediate model layers as is done with image-based nets. Sadly, there is a catch associated with the spectrogram approach: the spectrogram image is only the real part of the Fourier transform. The phase information, i.e. the imaginary part of the FFT, is "lost", or at least not directly moldable by the network.
 
