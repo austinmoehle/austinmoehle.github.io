@@ -1,10 +1,8 @@
 ---
-layout: page
-title: Birdsongs
-author: "Austin Moehle"
+layout: post
 ---
 
-#### Classification of Bird Songs Using the Inception-v3 Network
+# Classification of Bird Songs Using the Inception-v3 Network
 
 ## Introduction
 
