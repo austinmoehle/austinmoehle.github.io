@@ -50,12 +50,12 @@ The FFT works as follows: a short-time window placed over the audio captures the
 
 For this project, I applied a Hamming window with an FFT size of 512 samples and overlap of 256 samples to produce 224x341 greyscale images representing 4 seconds of sound. The processing function in the TensorFlow graph takes a random 3.75-second crop (224x224) then rescales this to a shape (299x299) that matches the input of the Inception-v3 network. The random crop along the time axis is a data augmentation step; note that the frequency axis is not cropped in case absolute pitch proves useful for classification.
 
-<img src="samples/wav/6_5.jpg" width="400">
+<img src="/samples/wav/6_5.jpg" width="400">
+
+**Song of a Ruby-Crowned Kinglet**
 
 To balance the training dataset, images from less-populated classes are resampled multiple times per epoch to keep the model’s exposure to each class relatively even. Note that the images are slightly different each time they are sampled due to random cropping.
 
-
-**Song of a Ruby-Crowned Kinglet**
 
 ## Model Architecture
 
