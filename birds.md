@@ -175,4 +175,4 @@ What can we do with bird songs and other interesting sounds besides classificati
 
 In other words, if we try to use a deep neural network to produce original sounds, audio reconstruction based on the model-generated spectrograms will be lossy without the phase information. Direct audio style-transfer (e.g. "genre swaps" for music) might therefore require training on raw (1D) audio rather than 2D spectrograms, which would necessitate a different model architecture. One attempt in the literature to apply a time-convolutional neural network to raw audio was unable to outperform a spectrogram-based approach (see ["End-to-end learning for music audio"](http://benanne.github.io/research/)).
 
-I confess that I am not an expert on the theory behind FFTs and phase reconstruction - if you are aware of a better solution, please let me know!
+I admit that I am not an expert on the theory behind FFTs and phase reconstruction, so if you are aware of a better solution, please let me know!
