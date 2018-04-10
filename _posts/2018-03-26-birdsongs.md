@@ -8,7 +8,7 @@ layout: post
 
 While deep learning is widely applied to speech recognition, efforts to categorize environmental sounds or music with the same techniques are less common. To the best of my knowledge, the identification of bird songs from field recordings has only been attempted in [one paper](http://ceur-ws.org/Vol-1609/16090560.pdf) from 2016. The authors, Tóth and Czeba, used a standard short-time FFT procedure to convert audio into 2D spectrograms that are fed into a standard convolutional neural network (CNN). Interestingly, they also decided to drop the low-intensity portions of the images (i.e. set them to zero) to emphasize the actual features. This seemed slightly counterproductive to me, since the stark contrast between the zero-set portions and the leftovers produced artificial edges that a CNN would detect as features. Still, their results were solid: their best model, a variant of AlexNet, reached a MAP (mean average precision) of 43% over 999 classes.
 
-For this project, I opted to build my own audio preprocessing pipeline and use the more complex [Inception-v3](https://arxiv.org/abs/1409.4842) model architecture.
+For this project, I opted to build my own audio preprocessing pipeline and use the more complex [Inception-v3](https://arxiv.org/abs/1409.4842) model architecture. The code for the audio processing and model training/evaluation steps can be viewed on [GitHub](https://github.com/austinmoehle/birdsongs).
 
 ## The Dataset
 
@@ -42,15 +42,50 @@ See the [labels file](/samples/labels.txt) for a full list of the 48 included bi
 
 ## Data Preprocessing
 
-To classify bird songs using a convolutional neural network (CNN) model, raw audio is sliced into short snippets then processed using a short-time Fourier transform (FFT) to produce a frequency-vs.-time spectrogram. This 2D greyscale "image" can then be fed into any standard CNN once properly scaled and cropped.
+The standard approach to feeding audio into a convolutional neural network (CNN) is to first slice the audio into short snippets then process these samples using a short-time Fourier transform (FFT), producing frequency-vs.-time spectrograms. These 2D greyscale "images" can be used as input to any standard CNN once properly scaled and cropped.
 
-The FFT works as follows: a short-time window placed over the audio captures the frequency distribution of the sound at that instant in time. Sliding this window over the length of the data produces a 2D "image" that captures the frequency-vs.-time characteristics of the audio. Usually, a mel-scale (basically a log-scale) is used for the frequency axis.
+The FFT works as follows: a short-time window placed over the audio captures the frequency distribution of the sound at that instant in time. Sliding this window over the length of the data produces a 2D "image" that captures the frequency-vs.-time characteristics of the audio. Usually, a mel-scale (a type of log-scale) is used for the frequency axis.
 
-For this project, I applied a Hamming window with an FFT size of 512 samples and overlap of 256 samples to produce 224x341 greyscale images representing 4 seconds of sound. The processing function in the TensorFlow graph takes a random 3.75-second crop (224x224) then rescales this to a shape (299x299) that matches the input of the Inception-v3 network. The random crop along the time axis is a data augmentation step; note that the frequency axis is not cropped in case absolute pitch proves useful for classification.
+For this project, I extracted 4-second snippets from each field recording by sliding a triangular window function across the audio and selecting the highest-intensity samples. After applying an FFT (Hamming window, FFT size of 512 samples, overlap of 256 samples), I generated 1857 greyscale images (224x341), each representing 4 seconds of audio.
 
 <img src="/samples/wav/6_5.jpg" width="400">
 
 **Song of a Ruby-Crowned Kinglet**
+
+
+In the TensorFlow graph, the parsing function takes a random 3.75-second crop of each 4-second spectrogram then rescales the resulting image to 299x299 to match the input of the Inception-v3 network. The random crop in the time dimension serves as a data augmentation step; each time a specific spectrogram is sampled by the model, it is slightly different. I chose not to apply a random crop in the frequency dimension to keep absolute pitch unperturbed.
+
+```python
+def _parse_function(filename, label):
+    # (1) Decode the image from jpg format.
+    image_string = tf.read_file(filename)
+    image_decoded = tf.image.decode_jpeg(image_string, channels=3)
+    image = tf.image.convert_image_dtype(image_decoded, dtype=tf.float32)
+    image.set_shape([224, 341, 3])
+
+    # (2) Resize the image 299x319.
+    new_height = tf.to_int32(299.0)
+    new_width = tf.to_int32(319.0)
+    crop_height = tf.to_int32(299.0)
+    crop_width = tf.to_int32(299.0)
+    image = tf.image.resize_images(image, [new_height, new_width])
+
+    # (3) Take a random 299x299 crop of the image (random time slice).
+    max_offset_height = tf.reshape(new_height - crop_height + 1, [])
+    max_offset_width = tf.reshape(new_width - crop_width + 1, [])
+    offset_height = tf.constant(0, dtype=tf.int32)
+    offset_width = tf.random_uniform([], maxval=max_offset_width, dtype=tf.int32)
+    original_shape = tf.shape(image)
+    cropped_shape = tf.stack([crop_height, crop_width, original_shape[2]])
+    offsets = tf.to_int32(tf.stack([offset_height, offset_width, 0]))
+    image = tf.slice(image, offsets, cropped_shape)
+
+    # (4) Standard preprocessing for Inception-v3 net:
+    #     Scale `0 -> 1` range for each pixel to `-1 -> 1`.
+    image = tf.subtract(image, 0.5)
+    image = tf.multiply(image, 2.0)
+    return image, label
+```
 
 To balance the training dataset, images from less-populated classes are resampled multiple times per epoch to keep the model’s exposure to each class relatively even. Note that the images are slightly different each time they are sampled due to random cropping.
 
@@ -105,7 +140,7 @@ Top-5 Accuracy|59.3%
 Let's take a look at some of the model's predictions. For each prediction, I've also included a random sample from the true class and a random sample from the class predicted by the model, which might give us an idea of what is happening when the model makes a mistake.
 
 ### Example 1 - [\#48 - American Tree Sparrow]
-![Image 5](/samples/sample_5.png)
+<img src="/samples/sample_5.png" width="355">
 ![Samples 5](/samples/duo_5.png)
 [Audio - Left Image](/samples/wav/48_4.wav)
 
@@ -113,7 +148,7 @@ Let's take a look at some of the model's predictions. For each prediction, I've 
 
 
 ### Example 2 - [\#44 - Blue Grosbeak]
-![Image 13](/samples/sample_13.png)
+<img src="/samples/sample_13.png" width="355">
 ![Samples 13](/samples/duo_13.png)
 [Audio - Left Image](/samples/wav/44_4.wav)
 
@@ -121,15 +156,15 @@ Let's take a look at some of the model's predictions. For each prediction, I've 
 
 
 ### Example 3 - [\#17 - Virginia's Warbler]
-![Image 14](/samples/sample_14.png)
+<img src="/samples/sample_14.png" width="355">
 ![Samples 14](/samples/duo_14.png)
 [Audio - Left Image](/samples/wav/17_2.wav)
 
 [Audio - Right Image](/samples/wav/17_1.wav)
 
 
-### Example 4 - [\#34 - Orange-Crowned Warbler (Lutescens)]
-![Image 23](/samples/sample_23.png)
+### Example 4 - [\#33 - Ovenbird]
+<img src="/samples/sample_23.png" width="355">
 ![Samples 23](/samples/duo_23.png)
 [Audio - Left Image](/samples/wav/33_5.wav)
 
@@ -140,7 +175,7 @@ Let's take a look at some of the model's predictions. For each prediction, I've 
 
 
 ### Example 5 - [\#34 - Orange-Crowned Warbler (Lutescens)]
-![Image 3](/samples/sample_3.png)
+<img src="/samples/sample_3.png" width="355">
 ![Samples 3](/samples/duo_3.png)
 [Audio - Left Image](/samples/wav/34_2.wav)
 
@@ -148,7 +183,7 @@ Let's take a look at some of the model's predictions. For each prediction, I've 
 
 
 ### Example 6 - [\#13 - Lincoln's Sparrow]
-![Image 31](/samples/sample_31.png)
+<img src="/samples/sample_31.png" width="355">
 ![Samples 31](/samples/duo_31.png)
 [Audio - Left Image](/samples/wav/13_8.wav)
 
@@ -156,7 +191,7 @@ Let's take a look at some of the model's predictions. For each prediction, I've 
 
 
 ### Example 7 - [\#32 - Purple Finch (Eastern)]
-![Image 18](/samples/sample_18.png)
+<img src="/samples/sample_18.png" width="355">
 ![Samples 18](/samples/duo_18.png)
 [Audio - Left Image](/samples/wav/32_4.wav)
 
@@ -174,3 +209,5 @@ What can we do with bird songs and other interesting sounds besides classificati
 In other words, if we try to use a deep neural network to produce original sounds, audio reconstruction based on the model-generated spectrograms will be lossy without the phase information. Direct audio style-transfer (e.g. "genre swaps" for music) might therefore require training on raw (1D) audio rather than 2D spectrograms, which would necessitate a different model architecture. One attempt in the literature to apply a time-convolutional neural network to raw audio was unable to outperform a spectrogram-based approach (see ["End-to-end learning for music audio"](http://benanne.github.io/research/)).
 
 I admit that I am not an expert on the theory behind FFTs and phase reconstruction, so if you are aware of a better solution, please let me know!
+
+The code for the audio processing and model training/evaluation steps can be found on [GitHub](https://github.com/austinmoehle/birdsongs).
