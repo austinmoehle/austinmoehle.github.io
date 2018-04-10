@@ -104,40 +104,93 @@ Although Inception-v3 was trained on an image classification task, I expected th
 
 I initially froze these lower layers with the ImageNet-trained weights and trained only the final fully-connected layer used for classification. Then, I "fine-tuned" the model by unfreezing the rest of the layers and training the entire network over many epochs.
 
-## Training Final Fully-Connected Layer
+## Training the Final Fully-Connected Layer
 
-After training the final layer for 200 epochs, the model achieved 27.7% accuracy on the train set and 24.0% on the validation set.
+I set up training for only the final (fully-connected) layer of Inception-v3.
+
+```python
+# Restore only the layers before Logits/AuxLogits.
+layers_exclude = ['InceptionV3/Logits', 'InceptionV3/AuxLogits']
+variables_to_restore = tf.contrib.framework.get_variables_to_restore(
+    exclude=layers_exclude)
+init_fn = tf.contrib.framework.assign_from_checkpoint_fn(
+    args['init_path'], variables_to_restore)
+
+logits_variables = tf.contrib.framework.get_variables('InceptionV3/Logits')
+logits_variables += tf.contrib.framework.get_variables('InceptionV3/AuxLogits')
+logits_init = tf.variables_initializer(logits_variables)
+
+tf.losses.sparse_softmax_cross_entropy(labels=labels,
+                                       logits=logits,
+                                       weights=1.0)
+tf.losses.sparse_softmax_cross_entropy(labels=labels,
+                                       logits=end_points['AuxLogits'],
+                                       weights=0.4)
+loss = tf.losses.get_total_loss()
+
+# Use this optimizer to train only the re-initialized final (FC) layer.
+logits_optimizer = tf.train.AdamOptimizer(learning_rate=args['learning_rate'],
+                                          epsilon=args['epsilon'])
+logits_train_op = logits_optimizer.minimize(loss, var_list=logits_variables)
+```
+
+Good values of `learning rate` and `epsilon` for the Adam optimizer were determined by a random search, as illustrated below.
+
+![Hyperparameter search](/assets/hp_logits.png)
+
+
+After training the final layer for 200 epochs with `learning_rate=6.1e-3` and `epsilon=0.93`, the model achieved 27.7% classification accuracy on the train set and 24.0% on the validation set.
 
 -------------|--------------
 Loss|4.541
 Train Accuracy|27.7%
 Validation Accuracy|24.0%
 
-For this training run, the Adam optimizer was set to an initial learning rate of 000000. Good values of learning rate and epsilon were determined by a random search, as illustrated below, yielding `learning_rate=6.1e-3` and `epsilon=0.93`.
 
-![Hyperparameter search](/assets/hp_logits.png)
 
-## Results - Training Full Net
+## Training the Full Inception-v3 Network
 
-Continuing from the above partially-trained model, I trained the full net (all trainable weights) for 750 more epochs. Again, I did a hyperparameter search and settled on `learning_rate=7.8e-4` and `epsilon=0.67`.
+
+Continuing from the partially-trained model above, I modified the graph to allow the optimizer to train all layers of the network. As before, I conducted a hyperparameter search and settled on `learning_rate=7.8e-4` and `epsilon=0.67` for this phase of training.
+
+```python
+all_variables = tf.contrib.framework.get_variables_to_restore()
+restore_dir_fn = tf.contrib.framework.assign_from_checkpoint_fn(
+    tf.train.latest_checkpoint(restore_dir), all_variables)
+tf.losses.sparse_softmax_cross_entropy(labels=labels,
+                                       logits=logits,
+                                       weights=1.0)
+tf.losses.sparse_softmax_cross_entropy(labels=labels,
+                                       logits=end_points['AuxLogits'],
+                                       weights=0.4)
+loss = tf.losses.get_total_loss()
+tf.summary.scalar('loss', loss)
+
+# Use this optimizer to train all model layers.
+full_optimizer = tf.train.AdamOptimizer(
+    learning_rate=args['learning_rate'], epsilon=args['epsilon'])
+full_train_op = full_optimizer.minimize(loss)
+```
+
+The results after training for 750 epochs are given below.
 
 -------------|--------------
 Loss|3.213
 Train Accuracy|46.4%
 Validation Accuracy|41.7%
 
-The loss and accuracy appear to have plateaued within the first 200 epochs. While it may be possible to squeeze more performance out of this network with different settings, it's also possible that the dataset is too small or too inherently noisy or random to improve much further. I still need to test some image processing settings (e.g. sample length) and hyperparameters (weight decay, learning rate, etc.) to be confident I can't do better.
+Loss and accuracy both appeared to plateau within the first 250 epochs. While it may be feasible to squeeze more performance out of the network with different settings, it's also possible that the dataset is too small or too inherently noisy/random to improve much further. In the upcoming weeks, I want to test different image processing settings (e.g. sample length or FFT parameters) and model hyperparameters (weight decay, learning rate, etc.) to see if I can make slight improvements.
 
-These are my final results using the held-out test set (286 images over 48 classes):
+As a final check, I evaluated the model on the held-out test set, which consists of 286 spectrograms generated from distinct recordings not shared by the training data. The resulting accuracy, 27.3%, is somewhat lower than the training/validation numbers. I suspect that the model is overfitting due to the small size of the dataset: only 408 recordings (1571 training images) over 48 classes.
 
 -------------|--------------
-Test Accuracy|27.3%
-Top-5 Accuracy|59.3%
+Top-1 Test Accuracy|27.3%
+Top-5 Test Accuracy|59.3%
 
 
 ## Examples of Correct Predictions
 
-Let's take a look at some of the model's predictions. For each prediction, I've also included a random sample from the true class and a random sample from the class predicted by the model, which might give us an idea of what is happening when the model makes a mistake.
+Let's take a look at some spectrograms and associated model predictions. For each prediction, I've provided a random sample from the true class and a random sample from the predicted class. Comparing the two might give you an idea of the visual similarities that are "confusing" the model when it makes a classification error.
 
 ### Example 1 - [\#48 - American Tree Sparrow]
 <img src="/samples/sample_5.png" width="355">
@@ -208,6 +261,6 @@ What can we do with bird songs and other interesting sounds besides classificati
 
 In other words, if we try to use a deep neural network to produce original sounds, audio reconstruction based on the model-generated spectrograms will be lossy without the phase information. Direct audio style-transfer (e.g. "genre swaps" for music) might therefore require training on raw (1D) audio rather than 2D spectrograms, which would necessitate a different model architecture. One attempt in the literature to apply a time-convolutional neural network to raw audio was unable to outperform a spectrogram-based approach (see ["End-to-end learning for music audio"](http://benanne.github.io/research/)).
 
-I admit that I am not an expert on the theory behind FFTs and phase reconstruction, so if you are aware of a better solution, please let me know!
+I am not an expert on the theory behind FFTs and phase reconstruction, so if you are aware of a better solution, please let me know!
 
-The code for the audio processing and model training/evaluation steps can be found on [GitHub](https://github.com/austinmoehle/birdsongs).
+The code for audio processing and model training/evaluation can be found on [GitHub](https://github.com/austinmoehle/birdsongs).
