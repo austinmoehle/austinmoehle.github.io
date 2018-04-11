@@ -179,9 +179,9 @@ Loss|3.213
 Train Accuracy|46.4%
 Validation Accuracy|41.7%
 
-Loss and accuracy both appeared to plateau within the first 250 epochs. While it may be feasible to squeeze more performance out of the network with different settings, it's also possible that the dataset is too small or too inherently noisy/random to improve much further. In the upcoming weeks, I want to test different image processing settings (e.g. sample length or FFT parameters) and model hyperparameters (weight decay, learning rate, etc.) to see if I can make slight improvements.
+Loss and accuracy both appeared to plateau after the first 250 epochs. While it may be feasible to squeeze more performance out of the network with different settings, it's also possible that the dataset is too small or too inherently noisy/random to improve substantially. I plan to test alternative image processing settings (e.g. sample length or FFT parameters) and model hyperparameters (weight decay, learning rate, etc.) to see if I can make slight improvements.
 
-As a final check, I evaluated the model on the held-out test set, which consists of 286 spectrograms generated from distinct recordings not shared by the training data. The resulting accuracy, 27.3%, is somewhat lower than the training/validation numbers. I suspect that the model is overfitting due to the small size of the dataset: only 408 recordings (1571 training images) over 48 classes.
+Finally, I evaluated the model on the held-out test set, which consists of 286 spectrograms generated from distinct recordings not shared by the training data. The resulting accuracy, 27.3%, is somewhat lower than the training/validation numbers. I suspect that the model is overfitting due to the small size of the dataset: only 408 recordings (1571 training images) over 48 classes.
 
 -------------|--------------
 Top-1 Test Accuracy|27.3%
