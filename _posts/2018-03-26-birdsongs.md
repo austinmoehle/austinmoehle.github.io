@@ -142,11 +142,13 @@ Good values of `learning rate` and `epsilon` for the Adam optimizer were determi
 After training the final layer for 200 epochs with `learning_rate=6.1e-3` and `epsilon=0.93`, the model achieved 27.7% classification accuracy on the train set and 24.0% on the validation set.
 
 -------------|--------------
-Loss|4.541
-Train Accuracy|27.7%
-Validation Accuracy|24.0%
+Loss|0.316
+Train Accuracy|98.9%
+Validation Accuracy|90.6%
 
-
+-------------|--------------
+Top-1 Test Accuracy|51.4%
+Top-5 Test Accuracy|79.6%
 
 ## Training the Full Inception-v3 Network
 
@@ -166,26 +168,22 @@ tf.losses.sparse_softmax_cross_entropy(labels=labels,
 loss = tf.losses.get_total_loss()
 tf.summary.scalar('loss', loss)
 
-# Use this optimizer to train all model layers.
+# BatchNorm parameters in `UPDATE_OPS` must be updated separately.
+update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+# Define an optimizer for training all model layers.
 full_optimizer = tf.train.AdamOptimizer(
     learning_rate=args['learning_rate'], epsilon=args['epsilon'])
-full_train_op = full_optimizer.minimize(loss)
+with tf.control_dependencies(update_ops):
+    full_train_op = full_optimizer.minimize(loss)
 ```
 
-The results after training for 750 epochs are given below.
+After 40 training epochs, I evaluated the model on the held-out test set, which consists of 286 spectrograms generated from distinct recordings not shared by the training data. The resulting accuracy (79.0%) is somewhat lower than the training/validation numbers. I suspect that the model is overfitting due to the small size of the dataset: only 408 recordings (1571 training images) over 48 classes.
 
 -------------|--------------
-Loss|3.213
-Train Accuracy|46.4%
-Validation Accuracy|41.7%
+Top-1 Test Accuracy|79.0%
+Top-5 Test Accuracy|96.2%
 
-Loss and accuracy both appeared to plateau after the first 250 epochs. While it may be feasible to squeeze more performance out of the network with different settings, it's also possible that the dataset is too small or too inherently noisy/random to improve substantially. I plan to test alternative image processing settings (e.g. sample length or FFT parameters) and model hyperparameters (weight decay, learning rate, etc.) to see if I can make slight improvements.
-
-Finally, I evaluated the model on the held-out test set, which consists of 286 spectrograms generated from distinct recordings not shared by the training data. The resulting accuracy, 27.3%, is somewhat lower than the training/validation numbers. I suspect that the model is overfitting due to the small size of the dataset: only 408 recordings (1571 training images) over 48 classes.
-
--------------|--------------
-Top-1 Test Accuracy|27.3%
-Top-5 Test Accuracy|59.3%
+While it may be feasible to squeeze more performance out of the network with different settings, it's also possible that the dataset is too small or too inherently noisy/random to improve substantially. I plan to test alternative image processing settings (e.g. sample length or FFT parameters) and model hyperparameters (weight decay, learning rate, etc.) to see if I can make slight improvements.
 
 
 ## Examples of Correct Predictions
